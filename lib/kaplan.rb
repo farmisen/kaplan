@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + '/kaplan/railtie' if defined?(Rails)
+
 module Kaplan
   module DatabaseAdapters
     module ActiveRecord
