@@ -10,7 +10,7 @@ namespace :kaplan do
       Rake::Task['kaplan:db:seed'].invoke(env)
     end
 
-    desc "Seeds a database of your choice (default: development) with bootstrap data. The relevant tables are truncated first so you don't have to."
+    desc "Seeds a database of your choice (default: development) with bootstrap data.\nThe relevant tables are truncated first so you don't have to."
     task :seed, [:env] => :environment do |t, args|
       env = args[:env] || ENV["RAILS_ENV"] || "development"
       #raise "No environment specified. Pass the environment to the task as an argument to specify the environment." unless env
@@ -20,7 +20,7 @@ namespace :kaplan do
       Rake::Task['db:seed'].invoke
     end
 
-    desc "Truncates tables in a database of your choice (default: development). By default this just truncates the seed tables, if you want all of them pass ALL=true."
+    desc "Truncates tables in a database of your choice (default: development).\nBy default this just truncates the seed tables, if you want all of them pass ALL=true."
     task :plow, [:env] => :environment do |t, args|
       env = args[:env] || ENV["RAILS_ENV"] || "development"
       #raise "No environment specified. Pass the environment to the task as an argument to specify the environment." unless env
@@ -28,7 +28,7 @@ namespace :kaplan do
       Kaplan.plow_database(:env => env, :all => all)
     end
 
-    desc "Dumps the structure of the development database to file and copies it to the database of your choice. Adapters must be the same."
+    desc "Dumps the structure of the development database to file and copies it to the database of your choice.\nAdapters must be the same."
     task :clone_structure, [:env] => :environment do |t, args|
       env = args[:env] || ENV["RAILS_ENV"]
       raise "Can't clone the dev database to the dev database" if env == "development"
