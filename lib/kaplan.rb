@@ -16,7 +16,7 @@ module Kaplan
       end
 
       def plow_collection(name)
-        ::ActiveRecord::Base.connection.execute("TRUNCATE TABLE `#{name}`")
+        ::ActiveRecord::Base.connection.execute("TRUNCATE TABLE #{::ActiveRecord::Base.connection.quote_table_name(name)}")
       end
     end
 
@@ -48,6 +48,18 @@ module Kaplan
       def current_environment
         ::Rails.env.to_s
       end
+      
+      def current_environment=(environment)
+        if ::Rails.version.split(".")[0] == "3"
+          ::Rails.env = environment
+        else
+          silence_warnings do
+            ::Rails.instance_variable_set("@_env", nil)
+            Object.const_set(:RAILS_ENV, environment)
+          end
+        end
+        puts "Current environment: #{current_environment}"
+      end
     end
 
     module Padrino
@@ -56,7 +68,14 @@ module Kaplan
       end
 
       def current_environment
-        PADRINO_ENV
+        ::Padrino.env.to_s
+      end
+      
+      def current_environment=(environment)
+        silence_warnings do
+          ::Padrino.instance_variable_set("@_env", nil)
+          Object.const_set(:PADRINO_ENV, environment)
+        end
       end
     end
   end
@@ -128,7 +147,8 @@ module Kaplan
     end
 
     def seedable_collections(env)
-      seeds(env).map {|filename, ext, collection_name, model| collection_name }
+      # Remove collections that don't exist
+      seeds(env).map {|filename, ext, collection_name, model| collection_name } & all_collections
     end
 
   private

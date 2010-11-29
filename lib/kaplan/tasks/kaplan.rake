@@ -32,7 +32,7 @@ namespace :kaplan do
     task :clone_structure, [:env] => :environment do |t, args|
       env = args[:env] || ENV["RAILS_ENV"]
       raise "Can't clone the dev database to the dev database" if env == "development"
-      raise "No environment specified. Pass the environment to the task as an argument to specify the environment." unless env
+      #raise "No environment specified. Pass the environment to the task as an argument to specify the environment." unless env
       puts "Cloning dev structure to #{env} database..."
 
       abcs = ActiveRecord::Base.configurations
@@ -42,14 +42,17 @@ namespace :kaplan do
         raise "Development db adapter and #{env} db adapter must be the same to clone"
       end
 
-      RAILS_ENV = env
+      Kaplan.current_environment = env
+      Kaplan.establish_database
       Rake::Task['db:drop'].invoke
       Rake::Task['db:create'].invoke
 
-      RAILS_ENV = 'development'
+      Kaplan.current_environment = 'development'
+      Kaplan.establish_database
       Rake::Task["db:structure:dump"].invoke
 
-      RAILS_ENV = env
+      Kaplan.current_environment = env
+      Kaplan.establish_database
       case adapter
       when "mysql"
         ActiveRecord::Base.establish_connection(env)
@@ -57,6 +60,11 @@ namespace :kaplan do
         IO.readlines("#{RAILS_ROOT}/db/development_structure.sql").join.split("\n\n").each do |table|
           ActiveRecord::Base.connection.execute(table)
         end
+      when "postgresql"
+        ENV['PGHOST']     = abcs[env]["host"] if abcs[env]["host"]
+        ENV['PGPORT']     = abcs[env]["port"].to_s if abcs[env]["port"]
+        ENV['PGPASSWORD'] = abcs[env]["password"].to_s if abcs[env]["password"]
+        `psql -U "#{abcs[env]["username"]}" -f #{Rails.root}/db/development_structure.sql #{abcs[env]["database"]}`
       when "sqlite", "sqlite3"
         dbfile = abcs[env]["database"] || abcs[env]["dbfile"]
         `#{abcs[env]["adapter"]} #{dbfile} < #{RAILS_ROOT}/db/development_structure.sql`
@@ -68,7 +76,8 @@ namespace :kaplan do
       env = args[:env] || ENV["RAILS_ENV"] || "development"
       #raise "No environment specified. Pass the environment to the task as an argument to specify the environment." unless env
       puts "Creating #{env} database..."
-      RAILS_ENV = env
+      Kaplan.current_environment = env
+      Kaplan.establish_database
       Rake::Task['db:create'].invoke
     end
 
@@ -77,7 +86,8 @@ namespace :kaplan do
       env = args[:env] || ENV["RAILS_ENV"] || "development"
       #raise "No environment specified. Pass the environment to the task as an argument to specify the environment." unless env
       puts "Dropping #{env} database..."
-      RAILS_ENV = env
+      Kaplan.current_environment = env
+      Kaplan.establish_database
       Rake::Task['db:drop'].invoke
     end
   end
