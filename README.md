@@ -14,7 +14,18 @@ Doesn't Rails already provide a `db:reset` Rake task? Yes, but it runs `db:schem
 
 Also, Rails doesn't give you a way to programmatically reset (or at least seed) your database. So if you want to do it inside of a script, you're forced to `require 'rake'` and then say `Rake::Task.invoke["db:reset"]`. That's ridiculous. Kaplan gives you methods for plowing and seeding the database.
 
-Finally, Kaplan improves Rails' seeding by 1) truncating the tables that will be seeded first, 2) allowing you to keep environment-specific seed files, and 2) allowing you to use YAML or text files since that's a simpler way of representing data (and you're probably used to seeing YAML for fixture data).
+Additionally, Kaplan improves Rails' seeding by 1) truncating the tables that will be seeded first, 2) allowing you to keep environment-specific seed files, and 2) allowing you to use YAML or text files since that's a simpler way of representing data (and you're probably used to seeing YAML for fixture data).
+
+Finally, Kaplan was designed to be framework- and ORM-agnostic. Currently the following are supported:
+
+* **Frameworks:**
+  * Rails
+  * Padrino
+* **ORMs:**
+  * ActiveRecord
+  * Mongoid
+  
+It's easy to add support for another framework or ORM, though.
 
 ## Usage
 
