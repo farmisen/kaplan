@@ -153,7 +153,13 @@ module Kaplan
 
   private
     def insert_rows(rows, model)
-      rows.each {|row| model.create!(row) }
+      rows.each do |row|
+        record = model.new
+        # set attributes explicitly instead of just shoving them into .new
+        # in case 'id' is one of the attributes (which would get ignored otherwise)
+        row.each {|k,v| record.send("#{k}=", v) }
+        record.save!
+      end
     end
 
     def insert_rows_from_csv(lines, model)
