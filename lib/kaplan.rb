@@ -98,7 +98,7 @@ module Kaplan
     end
 
     def seeds(env)
-      (Dir["#{project_root}/seeds/*"] + Dir["#{project_root}/seeds/#{env}/*"]).
+      (Dir["#{project_root}/seeds/*.{yml,rb,txt,csv}"] + Dir["#{project_root}/seeds/#{env}/*.{yml,rb,txt,csv}"]).
       reject {|filename| File.directory?(filename) }.
       map do |filename|
         basename = ::File.basename(filename)
