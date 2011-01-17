@@ -120,7 +120,9 @@ module Kaplan
       seeds(options[:env]).each do |filename, ext, collection_name, model|
         if ext == "rb"
           puts " - Adding data for #{collection_name}..." if level > 1
-          load filename
+          records = eval(File.read(filename))
+          records = [records] if Hash === records
+          insert_rows(records, model)
         elsif ext == "yml" || ext == "yaml"
           data = ::YAML.load_file(filename)
           records = (Hash === data) ? data[data.keys.first] : data
