@@ -97,10 +97,20 @@ module Kaplan
       end
     end
 
-    def seeds(env)
-      (Dir["#{project_root}/seeds/*.{yml,rb,txt,csv}"] + Dir["#{project_root}/seeds/#{env}/*.{yml,rb,txt,csv}"]).
-      reject {|filename| File.directory?(filename) }.
-      map do |filename|
+    def seeds(env, options={})
+      if options[:only]
+        files = options[:only].
+          map {|path| Dir["#{project_root}/#{path}"] }.
+          flatten.
+          select {|file| File.file?(file) && file =~ /\.(yml|yaml|rb|txt|csv)/ }
+          
+        if files.empty?
+          raise "Error in Kaplan.seeds: Couldn't find the seed files you specified."
+        end
+      else
+        files = Dir["#{project_root}/seeds/*.{yml,yaml,rb,txt,csv}"] + Dir["#{project_root}/seeds/#{env}/*.{yml,yaml,rb,txt,csv}"]
+      end
+      files.map do |filename|
         basename = ::File.basename(filename)
         basename =~ /^(.+?)\.([^.]+)$/
         collection_name = $1
@@ -117,7 +127,8 @@ module Kaplan
       options.reverse_merge!(:env => current_environment)
       puts "Seeding the #{options[:env]} database..." if level > 0
       establish_database(options[:env])
-      seeds(options[:env]).each do |filename, ext, collection_name, model|
+      seeds = seeds(options[:env], :only => options[:only])
+      seeds.each do |filename, ext, collection_name, model|
         if ext == "rb"
           puts " - Adding data for #{collection_name}..." if level > 1
           records = eval(File.read(filename))
@@ -141,16 +152,16 @@ module Kaplan
       options.reverse_merge!(:env => current_environment)
       puts "Plowing the #{options[:env]} database..." if level > 0
       establish_database(options[:env])
-      collections = options[:all] ? all_collections : seedable_collections(options[:env])
+      collections = options[:all] ? all_collections : seedable_collections(options[:env], :only => options[:only])
       collections.each do |coll|
         plow_collection(coll)
         puts " - Plowed #{coll}" if level > 1
       end
     end
 
-    def seedable_collections(env)
+    def seedable_collections(env, options={})
       # Remove collections that don't exist
-      seeds(env).map {|filename, ext, collection_name, model| collection_name } & all_collections
+      seeds(env, options).map {|filename, ext, collection_name, model| collection_name } & all_collections
     end
 
   private

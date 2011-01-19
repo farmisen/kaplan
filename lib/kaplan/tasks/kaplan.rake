@@ -4,35 +4,38 @@ namespace :kaplan do
     task :reset, [:env] => :environment do |t, args|
       env = args[:env] || ENV["RAILS_ENV"]
       raise "Can't reset the dev database" if env == "development"
-      #raise "No environment specified. Pass the environment to the task as an argument to specify the environment." unless env
       puts "Resetting #{env} database by cloning dev schema and seeding db..."
       Rake::Task['kaplan:db:clone_structure'].invoke(env)
       Rake::Task['kaplan:db:seed'].invoke(env)
     end
 
     desc "Seeds a database of your choice (default: development) with bootstrap data.\nThe relevant tables are truncated first so you don't have to."
-    task :seed, [:env] => :environment do |t, args|
+    task :seed, [:env, :only] => :environment do |t, args|
       env = args[:env] || ENV["RAILS_ENV"] || "development"
-      #raise "No environment specified. Pass the environment to the task as an argument to specify the environment." unless env
-      Rake::Task['kaplan:db:plow'].invoke(env)
-      Kaplan.seed_database(:env => env)
+      if only = args[:only] || ENV["ONLY"]
+        only = only.split(",") unless Array === only
+      end
+      Rake::Task['kaplan:db:plow'].invoke(env, only)
+      Kaplan.seed_database(:env => env, :only => only)
       Kaplan.establish_database(env)
       Rake::Task['db:seed'].invoke
     end
 
     desc "Truncates tables in a database of your choice (default: development).\nBy default this just truncates the seed tables, if you want all of them pass ALL=true."
-    task :plow, [:env] => :environment do |t, args|
+    task :plow, [:env, :only] => :environment do |t, args|
       env = args[:env] || ENV["RAILS_ENV"] || "development"
-      #raise "No environment specified. Pass the environment to the task as an argument to specify the environment." unless env
-      all = !!ENV["ALL"]
-      Kaplan.plow_database(:env => env, :all => all)
+      unless all = !!ENV["ALL"]
+        if only = args[:only] || ENV["ONLY"]
+          only = only.split(",") unless Array === only
+        end
+      end
+      Kaplan.plow_database(:env => env, :only => only, :all => all)
     end
 
     desc "Dumps the structure of the development database to file and copies it to the database of your choice.\nAdapters must be the same."
     task :clone_structure, [:env] => :environment do |t, args|
       env = args[:env] || ENV["RAILS_ENV"]
       raise "Can't clone the dev database to the dev database" if env == "development"
-      #raise "No environment specified. Pass the environment to the task as an argument to specify the environment." unless env
       puts "Cloning dev structure to #{env} database..."
 
       abcs = ActiveRecord::Base.configurations
@@ -74,7 +77,6 @@ namespace :kaplan do
     desc "Creates a database of your choice (default: development)"
     task :create, [:env] => :environment do |t, args|
       env = args[:env] || ENV["RAILS_ENV"] || "development"
-      #raise "No environment specified. Pass the environment to the task as an argument to specify the environment." unless env
       puts "Creating #{env} database..."
       Kaplan.current_environment = env
       Kaplan.establish_database
@@ -84,7 +86,6 @@ namespace :kaplan do
     desc "Drops the database of your choice (default: development)"
     task :drop, [:env] => :environment do |t, args|
       env = args[:env] || ENV["RAILS_ENV"] || "development"
-      #raise "No environment specified. Pass the environment to the task as an argument to specify the environment." unless env
       puts "Dropping #{env} database..."
       Kaplan.current_environment = env
       Kaplan.establish_database
