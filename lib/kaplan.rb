@@ -48,7 +48,7 @@ module Kaplan
       def current_environment
         ::Rails.env.to_s
       end
-      
+
       def current_environment=(environment)
         if ::Rails.version.split(".")[0] == "3"
           ::Rails.env = environment
@@ -70,7 +70,7 @@ module Kaplan
       def current_environment
         ::Padrino.env.to_s
       end
-      
+
       def current_environment=(environment)
         silence_warnings do
           ::Padrino.instance_variable_set("@_env", nil)
@@ -103,7 +103,7 @@ module Kaplan
           map {|path| Dir["#{project_root}/#{path}"] }.
           flatten.
           select {|file| File.file?(file) && file =~ /\.(yml|yaml|rb|txt|csv)/ }
-          
+
         if files.empty?
           raise "Error in Kaplan.seeds: Couldn't find the seed files you specified."
         end
@@ -131,9 +131,7 @@ module Kaplan
       seeds.each do |filename, ext, collection_name, model|
         if ext == "rb"
           puts " - Adding data for #{collection_name}..." if level > 1
-          records = eval(File.read(filename))
-          records = [records] if Hash === records
-          insert_rows(records, model)
+          load filename
         elsif ext == "yml" || ext == "yaml"
           data = ::YAML.load_file(filename)
           records = (Hash === data) ? data[data.keys.first] : data
